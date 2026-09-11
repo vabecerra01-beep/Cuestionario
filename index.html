@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provisiones en Juego</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,450;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --paper:#F3F0E8;
+    --surface:#FFFFFF;
+    --ink:#1D2621;
+    --ink-soft:#5C6B62;
+    --line:#DAD4C4;
+    --accent:#1F6F5C;
+    --accent-ink:#F4F0E4;
+    --accent-2:#C08A2E;
+    --good:#2E7D46;
+    --good-soft:#E4F1E7;
+    --bad:#C1442E;
+    --bad-soft:#F8E7E2;
+    --shadow: 0 1px 2px rgba(29,38,33,.06), 0 10px 30px -12px rgba(29,38,33,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12161A;
+      --surface:#1B211E;
+      --ink:#E9E6DC;
+      --ink-soft:#9BA79E;
+      --line:#2C332D;
+      --accent:#4FA98D;
+      --accent-ink:#0E1614;
+      --accent-2:#D9A648;
+      --good:#5FBE7E;
+      --good-soft:#1B3226;
+      --bad:#E27A63;
+      --bad-soft:#3A211C;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#12161A;
+    --surface:#1B211E;
+    --ink:#E9E6DC;
+    --ink-soft:#9BA79E;
+    --line:#2C332D;
+    --accent:#4FA98D;
+    --accent-ink:#0E1614;
+    --accent-2:#D9A648;
+    --good:#5FBE7E;
+    --good-soft:#1B3226;
+    --bad:#E27A63;
+    --bad-soft:#3A211C;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 37px,
+        var(--line) 37px, var(--line) 38px
+      ),
+      var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    padding-inline: 20px;
+    padding-block: 40px;
+    min-height:100%;
+  }
+  h1,h2,h3{ text-wrap:balance; margin:0; font-family:'Fraunces', Georgia, serif; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .masthead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .masthead .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .seal{
+    width:52px; height:52px; border-radius:50%;
+    border:1.5px solid var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--accent);
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:15px;
+    flex:none;
+    position:relative;
+  }
+  .seal::before{
+    content:"";
+    position:absolute; inset:4px;
+    border:1px dashed var(--accent);
+    border-radius:50%;
+    opacity:.55;
+  }
+  .brand-text .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.11em;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    font-weight:600;
+  }
+  .brand-text h1{ font-size:20px; font-weight:600; }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding: 34px clamp(20px, 5vw, 44px);
+  }
+
+  /* ---- Join screen ---- */
+  .join-kicker{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--accent);
+    margin-bottom:10px;
+  }
+  .join-title{ font-size:clamp(26px, 5vw, 34px); font-weight:600; line-height:1.15; margin-bottom:10px;}
+  .join-sub{ color:var(--ink-soft); font-size:15px; line-height:1.55; max-width:46ch; margin-bottom:26px;}
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:10px 22px;
+    margin-bottom:28px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+  }
+  .meta-item{ display:flex; flex-direction:column; gap:2px; min-width:90px;}
+  .meta-item .num{ font-size:19px; font-weight:600;}
+  .meta-item .label{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em;}
+
+  label.field-label{ display:block; font-size:13px; font-weight:600; margin-bottom:8px; color:var(--ink);}
+  input#nameInput{
+    width:100%;
+    font-family:inherit;
+    font-size:16px;
+    padding:13px 15px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    outline:none;
+  }
+  input#nameInput:focus{ border-color:var(--accent); }
+
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+  }
+  button:focus-visible, input:focus-visible, a:focus-visible{
+    outline:2.5px solid var(--accent-2);
+    outline-offset:2px;
+  }
+  .btn-primary{
+    margin-top:18px;
+    width:100%;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-size:16px;
+    font-weight:600;
+    padding:15px 20px;
+    border-radius:11px;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-primary:active{ transform:scale(.99); }
+  .btn-primary:disabled{ opacity:.45; cursor:not-allowed; }
+
+  /* ---- Quiz screen ---- */
+  .quiz-top{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:22px;
+  }
+  .progress-block{ display:flex; flex-direction:column; gap:8px; flex:1; }
+  .progress-label{ font-size:12px; letter-spacing:.06em; color:var(--ink-soft); text-transform:uppercase; font-weight:600;}
+  .progress-track{ height:5px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:3px; transition:width .3s ease; }
+
+  .q-text{ font-size:clamp(19px,3.4vw,23px); font-weight:600; line-height:1.35; margin-bottom:24px; }
+
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    width:100%;
+    text-align:left;
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:15.5px;
+    color:var(--ink);
+    transition: border-color .12s ease, background .12s ease, transform .08s ease;
+  }
+  .opt:hover:not(:disabled){ border-color:var(--accent); }
+  .opt:active:not(:disabled){ transform:scale(.995); }
+  .opt .letter{
+    flex:none;
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .opt .opt-text{ flex:1; }
+  .opt:disabled{ cursor:default; }
+  .opt.correct{ background:var(--good-soft); border-color:var(--good); }
+  .opt.correct .letter{ background:var(--good); border-color:var(--good); color:var(--accent-ink); }
+  .opt.wrong{ background:var(--bad-soft); border-color:var(--bad); }
+  .opt.wrong .letter{ background:var(--bad); border-color:var(--bad); color:var(--accent-ink); }
+  .opt.dim{ opacity:.5; }
+
+  .feedback-row{
+    min-height:22px;
+    margin-top:16px;
+    font-size:13.5px;
+    font-weight:600;
+    display:flex; align-items:center; gap:8px;
+  }
+  .feedback-row.good{ color:var(--good); }
+  .feedback-row.bad{ color:var(--bad); }
+
+  .next-btn{
+    margin-top:20px;
+    width:100%;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-size:15px;
+    font-weight:600;
+    padding:14px 20px;
+    border-radius:11px;
+    transition:filter .15s ease, transform .1s ease, opacity .15s ease;
+  }
+  .next-btn:hover{ filter:brightness(1.08); }
+  .next-btn:active{ transform:scale(.99); }
+
+  /* ---- Results ---- */
+  .results-top{ text-align:center; padding-bottom:26px; border-bottom:1px solid var(--line); margin-bottom:24px;}
+  .score-big{ font-size:56px; font-weight:700; line-height:1; font-family:'Fraunces', serif;}
+  .score-big span{ font-size:26px; color:var(--ink-soft); font-weight:500; }
+  .score-tag{
+    display:inline-block; margin-top:14px;
+    background:var(--accent); color:var(--accent-ink);
+    font-size:12.5px; font-weight:600; letter-spacing:.03em;
+    padding:6px 14px; border-radius:999px;
+  }
+  .score-name{ margin-top:10px; color:var(--ink-soft); font-size:14px;}
+
+  .grid20{
+    display:grid;
+    grid-template-columns:repeat(10, 1fr);
+    gap:6px;
+    margin-bottom:26px;
+  }
+  .cell{
+    aspect-ratio:1;
+    border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; font-weight:600;
+    color:var(--accent-ink);
+  }
+  .cell.good{ background:var(--good); }
+  .cell.bad{ background:var(--bad); }
+
+  .review{ display:flex; flex-direction:column; gap:0; margin-bottom:24px; }
+  .review-item{ padding:14px 0; border-top:1px solid var(--line); }
+  .review-item:last-child{ border-bottom:1px solid var(--line); }
+  .review-q{ font-size:14.5px; font-weight:600; margin-bottom:6px; }
+  .review-a{ font-size:13.5px; color:var(--ink-soft); display:flex; gap:6px; align-items:baseline; flex-wrap:wrap;}
+  .review-a b{ color:var(--good); font-weight:600; }
+  .review-a .miss{ color:var(--bad); text-decoration:line-through; text-decoration-color:var(--bad); }
+
+  details{ margin-bottom:24px; }
+  summary{
+    cursor:pointer; font-size:13.5px; font-weight:600; color:var(--accent);
+    list-style:none;
+  }
+  summary::-webkit-details-marker{ display:none; }
+  summary::before{ content:"Ver detalle de respuestas ▸ "; }
+  details[open] summary::before{ content:"Ocultar detalle ▾ "; }
+
+  .actions{ display:flex; flex-direction:column; gap:10px; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn-secondary{
+    flex:1;
+    min-width:150px;
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    color:var(--ink);
+    font-size:14px; font-weight:600;
+    padding:13px 16px; border-radius:10px;
+    text-align:center;
+    text-decoration:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-secondary:hover{ border-color:var(--accent); }
+  .btn-ghost{
+    background:transparent; border:none; color:var(--ink-soft);
+    font-size:13px; text-decoration:underline; text-underline-offset:3px;
+    padding:6px; align-self:center;
+  }
+
+  footer{ text-align:center; font-size:12px; color:var(--ink-soft); padding-top:6px; }
+
+  [hidden]{ display:none !important; }
+
+  @media (max-width:420px){
+    .card{ padding:26px 18px; }
+    .grid20{ grid-template-columns:repeat(5,1fr); }
+    .score-big{ font-size:46px; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <div class="seal">§21</div>
+      <div class="brand-text">
+        <div class="eyebrow">NIIF para Pymes</div>
+        <h1>Provisiones en Juego</h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN -->
+  <div class="card" id="screen-join">
+    <div class="join-kicker">Quiz · Sección 21</div>
+    <div class="join-title">Provisiones y contingencias</div>
+    <p class="join-sub">Responde 20 preguntas de opción múltiple a tu propio ritmo. Al elegir una respuesta verás de inmediato si acertaste, y avanzas cuando quieras.</p>
+
+    <div class="meta-row">
+      <div class="meta-item"><span class="num mono">20</span><span class="label">Preguntas</span></div>
+      <div class="meta-item"><span class="num mono">4</span><span class="label">Opciones c/u</span></div>
+      <div class="meta-item"><span class="num mono">Libre</span><span class="label">Ritmo</span></div>
+    </div>
+
+    <label class="field-label" for="nameInput">Tu nombre completo</label>
+    <input id="nameInput" type="text" placeholder="Ej: María Fernanda Ruiz" autocomplete="name" maxlength="60">
+    <button class="btn-primary" id="startBtn" disabled>Comenzar cuestionario</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="card" id="screen-quiz" hidden>
+    <div class="quiz-top">
+      <div class="progress-block">
+        <div class="progress-label"><span class="mono" id="qIndex">01</span> / 20</div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </div>
+
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="optionsWrap"></div>
+    <div class="feedback-row" id="feedbackRow"></div>
+    <button class="next-btn" id="nextBtn" hidden>Siguiente pregunta →</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card" id="screen-results" hidden>
+    <div class="results-top">
+      <div class="score-big"><span id="scoreCorrect">0</span><span>/20</span></div>
+      <div class="score-tag" id="scoreTag">—</div>
+      <div class="score-name" id="scoreName"></div>
+    </div>
+
+    <div class="grid20" id="grid20"></div>
+
+    <details>
+      <summary></summary>
+      <div class="review" id="reviewList"></div>
+    </details>
+
+    <div class="actions">
+      <div class="btn-row">
+        <button class="btn-secondary" id="copyBtn">📋 Copiar resultado</button>
+        <a class="btn-secondary" id="mailBtn" href="#">✉️ Enviar por correo</a>
+      </div>
+      <button class="btn-ghost" id="retryBtn">Volver a intentar</button>
+    </div>
+  </div>
+
+  <footer>Sección 21 · NIIF para Pymes — cuestionario de repaso</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var QUESTIONS = [
+    { q:"¿Cómo define la Sección 21 a una provisión?",
+      o:["Un ajuste por la pérdida de valor de un bien","Un activo de valor completamente seguro","Un ingreso futuro sin riesgo alguno","Un pasivo de cuantía o vencimiento incierto"], c:3 },
+    { q:"¿Dónde se debe reflejar un pasivo contingente en los estados financieros?",
+      o:["Se contabiliza como un gasto pagado por anticipado","Se registra directamente como un ingreso del periodo","Se incluye dentro del estado de situación financiera","Se revela únicamente en las notas explicativas"], c:3 },
+    { q:"¿Qué tratamiento contable reciben los activos contingentes por regla de prudencia?",
+      o:["No se reconocen en el balance y solo se revelan si es probable","Se suman al valor de la propiedad, planta y equipo","Se contabilizan como un pasivo corriente diferido","Se registran como ingresos inmediatos en el balance"], c:0 },
+    { q:"¿Cuál de los siguientes temas se encuentra fuera del alcance de la Sección 21?",
+      o:["Demandas judiciales en curso contra la entidad","Contratos de carácter oneroso","Garantías otorgadas por ventas de productos","Beneficios a empleados como prima o cesantías"], c:3 },
+    { q:"¿Por qué la depreciación de un equipo no corresponde a una provisión de la Sección 21?",
+      o:["Porque es una estimación de una deuda futura","Porque depende directamente del fallo de un tribunal","Porque representa la pérdida de valor de un activo propio","Porque genera un pasivo genuino con un proveedor"], c:2 },
+    { q:"¿Qué concepto contable correcto se debe usar para las cuentas por cobrar de dudoso recaudo?",
+      o:["Pasivo contingente","Contrato oneroso","Deterioro de cartera","Provisión de cartera"], c:2 },
+    { q:"¿Cuántas condiciones se deben cumplir simultáneamente para reconocer una provisión?",
+      o:["Ninguna, basta con la decisión de la gerencia","Tres condiciones al mismo tiempo","Una sola condición de carácter legal","Cinco condiciones financieras específicas"], c:1 },
+    { q:"¿Qué porcentaje de probabilidad se considera habitualmente como el umbral para determinar que una salida de recursos es ‘probable’?",
+      o:["Únicamente el 100%","Exactamente el 10%","Mayor al 50%","Menor al 25%"], c:2 },
+    { q:"¿Qué sucede si una entidad tiene una demanda con una probabilidad de pérdida del 30%?",
+      o:["Se ignora completamente y no se menciona","Se reconoce como un activo contingente con ingreso","Se revela únicamente como pasivo contingente en notas","Registra una provisión en el balance general"], c:2 },
+    { q:"¿Cuál es el primer ‘candado’ necesario para el reconocimiento de una provisión?",
+      o:["La existencia de una obligación presente por un evento pasado","La intención futura de cerrar una línea de negocio","Tener la certeza de ganar una demanda","La autorización de un préstamo bancario futuro"], c:0 },
+    { q:"¿De dónde puede surgir una obligación que dé lugar al reconocimiento de una provisión?",
+      o:["Solamente de una ley","De una obligación legal o implícita","Únicamente de una decisión del contador","De una expectativa de obtener ganancias"], c:1 },
+    { q:"¿Cuál de las siguientes situaciones representa una obligación implícita?",
+      o:["Una empresa tiene la intención de realizar una inversión el próximo año","Una empresa anuncia que quiere abrir una nueva sede","Una empresa, por su comportamiento habitual, ha creado una expectativa válida de cumplir con una obligación","Una empresa espera aumentar sus ventas durante el siguiente periodo"], c:2 },
+    { q:"¿Qué significa que una provisión se mida por la “mejor estimación”?",
+      o:["Que se utiliza siempre el valor más alto posible","Que se utiliza el valor que la gerencia prefiera","Que se calcula el importe que razonablemente se espera pagar para cancelar la obligación","Que se utiliza únicamente el valor registrado en años anteriores"], c:2 },
+    { q:"¿Qué sucede cuando una obligación se espera pagar dentro de varios años y el efecto del tiempo es significativo?",
+      o:["Se elimina la obligación hasta que llegue la fecha de pago","Se mide utilizando el valor presente","Se reconoce inmediatamente como ingreso","Se registra siempre por el valor nominal sin ningún ajuste"], c:1 },
+    { q:"¿Qué efecto puede generar el paso del tiempo sobre una provisión medida a valor presente?",
+      o:["Puede generar un costo financiero por la reversión del descuento","Siempre genera un ingreso financiero","Hace desaparecer automáticamente la provisión","Convierte la provisión en un activo contingente"], c:0 },
+    { q:"¿Qué debe hacer una entidad con una provisión al finalizar cada periodo?",
+      o:["Mantener exactamente el mismo valor con el que fue reconocida","Eliminarla sin realizar ningún análisis","Revisarla y ajustarla de acuerdo con la mejor estimación disponible","Convertirla automáticamente en un pasivo contingente"], c:2 },
+    { q:"¿Cuál es el tratamiento general de un pasivo contingente?",
+      o:["Se reconoce siempre como un pasivo en el estado de situación financiera","Se reconoce inmediatamente como un gasto","No se reconoce como pasivo, pero puede requerir revelación en las notas","Se reconoce como un activo hasta que se resuelva la situación"], c:2 },
+    { q:"¿Qué ocurre cuando la posibilidad de una salida de recursos relacionada con un pasivo contingente es remota?",
+      o:["Debe reconocerse una provisión","Debe reconocerse un gasto","Generalmente no es necesario revelar el pasivo contingente","Debe reconocerse un activo contingente"], c:2 },
+    { q:"¿Por qué un activo contingente no se reconoce inmediatamente en los estados financieros?",
+      o:["Porque representa una posible entrada de beneficios que todavía es incierta","Porque todos los activos están prohibidos por la Sección 21","Porque siempre representa una obligación para la empresa","Porque debe registrarse primero como un gasto"], c:0 },
+    { q:"¿Qué sucede cuando la entrada de beneficios económicos relacionada con un activo contingente se vuelve prácticamente cierta?",
+      o:["Continúa siendo un activo contingente indefinidamente","Se convierte en un pasivo contingente","Se reconoce el activo correspondiente porque desaparece la incertidumbre","Se registra como una provisión"], c:2 }
+  ];
+
+  var LETTERS = ["A","B","C","D"];
+
+  var state = {
+    name:"",
+    idx:0,
+    answers:[], // {picked: index|-1, correct: bool}
+    locked:false
+  };
+
+  var screenJoin = document.getElementById("screen-join");
+  var screenQuiz = document.getElementById("screen-quiz");
+  var screenResults = document.getElementById("screen-results");
+
+  var nameInput = document.getElementById("nameInput");
+  var startBtn = document.getElementById("startBtn");
+
+  nameInput.addEventListener("input", function(){
+    startBtn.disabled = nameInput.value.trim().length < 2;
+  });
+  nameInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter" && !startBtn.disabled) startQuiz();
+  });
+  startBtn.addEventListener("click", startQuiz);
+
+  function startQuiz(){
+    state.name = nameInput.value.trim();
+    state.idx = 0;
+    state.answers = [];
+    screenJoin.hidden = true;
+    screenQuiz.hidden = false;
+    renderQuestion();
+  }
+
+  var qIndex = document.getElementById("qIndex");
+  var progressFill = document.getElementById("progressFill");
+  var qText = document.getElementById("qText");
+  var optionsWrap = document.getElementById("optionsWrap");
+  var feedbackRow = document.getElementById("feedbackRow");
+  var nextBtn = document.getElementById("nextBtn");
+
+  nextBtn.addEventListener("click", function(){
+    if(state.idx < QUESTIONS.length - 1){
+      state.idx++;
+      renderQuestion();
+    } else {
+      finishQuiz();
+    }
+  });
+
+  function renderQuestion(){
+    var item = QUESTIONS[state.idx];
+    state.locked = false;
+
+    qIndex.textContent = String(state.idx + 1).padStart(2,"0");
+    progressFill.style.width = ((state.idx) / QUESTIONS.length * 100) + "%";
+    qText.textContent = item.q;
+    feedbackRow.textContent = "";
+    feedbackRow.className = "feedback-row";
+    nextBtn.hidden = true;
+
+    optionsWrap.innerHTML = "";
+    item.o.forEach(function(optText, i){
+      var btn = document.createElement("button");
+      btn.className = "opt";
+      btn.innerHTML = '<span class="letter">' + LETTERS[i] + '</span><span class="opt-text"></span>';
+      btn.querySelector(".opt-text").textContent = optText;
+      btn.addEventListener("click", function(){ selectAnswer(i); });
+      optionsWrap.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(pickedIndex){
+    if(state.locked) return;
+    state.locked = true;
+
+    var item = QUESTIONS[state.idx];
+    var correctIndex = item.c;
+    var isCorrect = pickedIndex === correctIndex;
+    state.answers.push({ picked: pickedIndex, correct: isCorrect });
+
+    var opts = optionsWrap.querySelectorAll(".opt");
+    opts.forEach(function(btn, i){
+      btn.disabled = true;
+      if(i === correctIndex) btn.classList.add("correct");
+      else if(i === pickedIndex) btn.classList.add("wrong");
+      else btn.classList.add("dim");
+    });
+
+    if(isCorrect){
+      feedbackRow.textContent = "✔ ¡Correcto!";
+      feedbackRow.classList.add("good");
+    } else {
+      feedbackRow.textContent = "✘ Incorrecto — la respuesta correcta era " + LETTERS[correctIndex] + ".";
+      feedbackRow.classList.add("bad");
+    }
+
+    nextBtn.textContent = state.idx < QUESTIONS.length - 1 ? "Siguiente pregunta →" : "Ver resultados →";
+    nextBtn.hidden = false;
+    nextBtn.focus();
+  }
+
+  var scoreCorrect = document.getElementById("scoreCorrect");
+  var scoreTag = document.getElementById("scoreTag");
+  var scoreName = document.getElementById("scoreName");
+  var grid20 = document.getElementById("grid20");
+  var reviewList = document.getElementById("reviewList");
+  var detailsSummary = document.querySelector("#screen-results summary");
+
+  function finishQuiz(){
+    progressFill.style.width = "100%";
+    screenQuiz.hidden = true;
+    screenResults.hidden = false;
+
+    var correctCount = state.answers.filter(function(a){ return a.correct; }).length;
+    scoreCorrect.textContent = correctCount;
+    scoreName.textContent = state.name;
+
+    var pct = Math.round(correctCount / QUESTIONS.length * 100);
+    var tag;
+    if(pct >= 90) tag = "Excelente dominio de la Sección 21";
+    else if(pct >= 70) tag = "Buen manejo del tema";
+    else if(pct >= 50) tag = "Nivel aceptable, conviene repasar";
+    else tag = "Requiere repasar la Sección 21";
+    scoreTag.textContent = tag + " · " + pct + "%";
+
+    grid20.innerHTML = "";
+    state.answers.forEach(function(a, i){
+      var cell = document.createElement("div");
+      cell.className = "cell " + (a.correct ? "good" : "bad");
+      cell.textContent = i + 1;
+      grid20.appendChild(cell);
+    });
+
+    detailsSummary.textContent = "";
+
+    reviewList.innerHTML = "";
+    QUESTIONS.forEach(function(item, i){
+      var a = state.answers[i];
+      var row = document.createElement("div");
+      row.className = "review-item";
+      var pickedText = a.picked === -1 ? "Sin responder (tiempo agotado)" : LETTERS[a.picked] + ". " + item.o[a.picked];
+      var html = '<div class="review-q">' + (i+1) + ". " + escapeHtml(item.q) + '</div>';
+      html += '<div class="review-a">';
+      if(a.correct){
+        html += '<span>Tu respuesta: <b>' + escapeHtml(pickedText) + '</b></span>';
+      } else {
+        html += '<span>Tu respuesta: <span class="miss">' + escapeHtml(pickedText) + '</span></span>';
+        html += '<span>· Correcta: <b>' + LETTERS[item.c] + ". " + escapeHtml(item.o[item.c]) + '</b></span>';
+      }
+      html += '</div>';
+      row.innerHTML = html;
+      reviewList.appendChild(row);
+    });
+
+    setupActions(correctCount, pct);
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function setupActions(correctCount, pct){
+    var copyBtn = document.getElementById("copyBtn");
+    var mailBtn = document.getElementById("mailBtn");
+    var retryBtn = document.getElementById("retryBtn");
+
+    var summaryLine = state.answers.map(function(a){ return a.correct ? "✔" : "✘"; }).join(" ");
+    var reportText =
+      "Resultado — Sección 21 (Provisiones y Contingencias)\n" +
+      "Nombre: " + state.name + "\n" +
+      "Puntaje: " + correctCount + "/" + QUESTIONS.length + " (" + pct + "%)\n" +
+      "Detalle: " + summaryLine + "\n" +
+      "Fecha: " + new Date().toLocaleString("es-CO");
+
+    copyBtn.addEventListener("click", function(){
+      var done = function(){
+        var original = copyBtn.textContent;
+        copyBtn.textContent = "✓ Copiado";
+        setTimeout(function(){ copyBtn.textContent = original; }, 1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(reportText).then(done).catch(function(){
+          fallbackCopy(reportText); done();
+        });
+      } else {
+        fallbackCopy(reportText); done();
+      }
+    });
+
+    function fallbackCopy(text){
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); }catch(e){}
+      document.body.removeChild(ta);
+    }
+
+    var subject = "Resultado quiz Sección 21 — " + state.name;
+    var body = reportText;
+    mailBtn.href = "mailto:analistaindustriales@gmail.com" +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+
+    retryBtn.addEventListener("click", function(){
+      screenResults.hidden = true;
+      screenJoin.hidden = false;
+      nameInput.value = "";
+      startBtn.disabled = true;
+      nameInput.focus();
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>
