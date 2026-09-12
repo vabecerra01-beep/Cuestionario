@@ -314,6 +314,7 @@
   .podium-heading h3{ font-size:16px; font-weight:600; }
   .podium-heading .count{ font-size:12px; color:var(--ink-soft); }
   .podium-loading, .podium-empty{ font-size:13.5px; color:var(--ink-soft); }
+  .podium-live-note{ margin:12px 0 0; font-size:11.5px; color:var(--ink-soft); text-align:center; }
 
   .podium{
     display:flex; align-items:flex-end; justify-content:center; gap:8px;
@@ -437,6 +438,17 @@
     <label class="field-label" for="nameInput">Tu nombre completo</label>
     <input id="nameInput" type="text" placeholder="Ej: María Fernanda Ruiz" autocomplete="name" maxlength="60">
     <button class="btn-primary" id="startBtn" disabled>Comenzar cuestionario</button>
+    <button class="btn-ghost" id="viewPodiumBtn">🏆 Ver el podio sin responder</button>
+  </div>
+
+  <!-- PODIUM (sin responder) -->
+  <div class="card" id="screen-podium" hidden>
+    <div class="podium-heading">
+      <h3>🏆 Podio del curso</h3>
+      <span class="count" id="podiumCountStandalone"></span>
+    </div>
+    <div id="podiumBodyStandalone"><div class="podium-loading">Cargando resultados de todos…</div></div>
+    <button class="btn-ghost" id="backFromPodiumBtn">← Volver</button>
   </div>
 
   <!-- QUIZ -->
@@ -468,6 +480,7 @@
         <span class="count" id="podiumCount"></span>
       </div>
       <div id="podiumBody"><div class="podium-loading">Cargando resultados de todos…</div></div>
+      <p class="podium-live-note">Se actualiza solo cada 15s mientras tengas esta pantalla abierta.</p>
     </div>
 
     <details>
@@ -553,9 +566,12 @@
   var screenJoin = document.getElementById("screen-join");
   var screenQuiz = document.getElementById("screen-quiz");
   var screenResults = document.getElementById("screen-results");
+  var screenPodium = document.getElementById("screen-podium");
 
   var nameInput = document.getElementById("nameInput");
   var startBtn = document.getElementById("startBtn");
+  var viewPodiumBtn = document.getElementById("viewPodiumBtn");
+  var backFromPodiumBtn = document.getElementById("backFromPodiumBtn");
 
   nameInput.addEventListener("input", function(){
     startBtn.disabled = nameInput.value.trim().length < 2;
@@ -564,6 +580,21 @@
     if(e.key === "Enter" && !startBtn.disabled) startQuiz();
   });
   startBtn.addEventListener("click", startQuiz);
+
+  viewPodiumBtn.addEventListener("click", function(){
+    screenJoin.hidden = true;
+    screenPodium.hidden = false;
+    startPodiumPolling(
+      document.getElementById("podiumBodyStandalone"),
+      document.getElementById("podiumCountStandalone"),
+      null, null
+    );
+  });
+  backFromPodiumBtn.addEventListener("click", function(){
+    stopPodiumPolling();
+    screenPodium.hidden = true;
+    screenJoin.hidden = false;
+  });
 
   function startQuiz(){
     state.name = nameInput.value.trim();
@@ -708,12 +739,27 @@
   }
 
   // ---- Podio compartido (Google Sheets vía Apps Script) ----
-  var podiumBody = document.getElementById("podiumBody");
-  var podiumCount = document.getElementById("podiumCount");
+  var POLL_MS = 15000;
+  var pollTimer = null;
+
+  function stopPodiumPolling(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  function startPodiumPolling(bodyEl, countEl, myScore, myTimeSeconds){
+    stopPodiumPolling();
+    loadPodium(bodyEl, countEl, myScore, myTimeSeconds);
+    pollTimer = setInterval(function(){
+      loadPodium(bodyEl, countEl, myScore, myTimeSeconds);
+    }, POLL_MS);
+  }
 
   function submitAndLoadPodium(correctCount, pct, timeSeconds){
+    var bodyEl = document.getElementById("podiumBody");
+    var countEl = document.getElementById("podiumCount");
+
     if(!SHEET_API_URL){
-      podiumBody.innerHTML = '<div class="podium-empty">El podio compartido aún no está activado para este cuestionario.</div>';
+      bodyEl.innerHTML = '<div class="podium-empty">El podio compartido aún no está activado para este cuestionario.</div>';
       return;
     }
 
@@ -731,26 +777,30 @@
       body: JSON.stringify(payload)
     })
     .catch(function(){ /* seguimos igual: el podio se puede leer aunque el registro falle */ })
-    .then(function(){ return loadPodium(correctCount, timeSeconds); });
+    .then(function(){ startPodiumPolling(bodyEl, countEl, correctCount, timeSeconds); });
   }
 
-  function loadPodium(myScore, myTimeSeconds){
+  function loadPodium(bodyEl, countEl, myScore, myTimeSeconds){
+    if(!SHEET_API_URL){
+      bodyEl.innerHTML = '<div class="podium-empty">El podio compartido aún no está activado para este cuestionario.</div>';
+      return Promise.resolve();
+    }
     return fetch(SHEET_API_URL)
       .then(function(r){ return r.json(); })
-      .then(function(list){ renderPodium(list, myScore, myTimeSeconds); })
+      .then(function(list){ renderPodium(list, bodyEl, countEl, myScore, myTimeSeconds); })
       .catch(function(){
-        podiumBody.innerHTML = '<div class="podium-empty">No se pudo cargar el podio en este momento. Tu resultado ya quedó guardado — intenta recargar la página.</div>';
+        bodyEl.innerHTML = '<div class="podium-empty">No se pudo cargar el podio en este momento. Vuelve a intentar en unos segundos.</div>';
       });
   }
 
-  function renderPodium(list, myScore, myTimeSeconds){
+  function renderPodium(list, bodyEl, countEl, myScore, myTimeSeconds){
     if(!list || !list.length){
-      podiumCount.textContent = "";
-      podiumBody.innerHTML = '<div class="podium-empty">Eres el primero en responder — ¡vuelve a cargar más tarde para ver el podio completo!</div>';
+      countEl.textContent = "";
+      bodyEl.innerHTML = '<div class="podium-empty">Todavía nadie ha respondido — este panel se actualiza solo cada 15 segundos.</div>';
       return;
     }
 
-    podiumCount.textContent = list.length + (list.length === 1 ? " respuesta" : " respuestas");
+    countEl.textContent = list.length + (list.length === 1 ? " respuesta" : " respuestas");
 
     var medalOrder = [
       { key: "silver", pos: 1 },
@@ -759,12 +809,15 @@
     ];
     var medalEmoji = { gold:"🥇", silver:"🥈", bronze:"🥉" };
 
+    function isYou(p){
+      return myScore != null && p.name === state.name && p.score === myScore && p.timeSeconds === myTimeSeconds;
+    }
+
     var top3Html = '<div class="podium">';
     medalOrder.forEach(function(m){
       var p = list[m.pos];
       if(!p) return;
-      var isYou = p.name === state.name && p.score === myScore && p.timeSeconds === myTimeSeconds;
-      top3Html += '<div class="step ' + m.key + (isYou ? ' you' : '') + '">' +
+      top3Html += '<div class="step ' + m.key + (isYou(p) ? ' you' : '') + '">' +
         '<div class="medal">' + medalEmoji[m.key] + '</div>' +
         '<div class="p-name">' + escapeHtml(p.name) + '</div>' +
         '<div class="riser">' + p.score + '</div>' +
@@ -775,8 +828,7 @@
 
     var restHtml = '<div class="ranking">';
     list.slice(0, 10).forEach(function(p, i){
-      var isYou = p.name === state.name && p.score === myScore && p.timeSeconds === myTimeSeconds;
-      restHtml += '<div class="rank-row' + (isYou ? ' you' : '') + '">' +
+      restHtml += '<div class="rank-row' + (isYou(p) ? ' you' : '') + '">' +
         '<span class="pos mono">' + (i+1) + '</span>' +
         '<span class="rn">' + escapeHtml(p.name) + '</span>' +
         '<span class="rs mono">' + p.score + '/' + (p.total || QUESTIONS.length) + ' · ' + formatTime(p.timeSeconds) + '</span>' +
@@ -784,7 +836,7 @@
     });
     restHtml += '</div>';
 
-    podiumBody.innerHTML = top3Html + restHtml;
+    bodyEl.innerHTML = top3Html + restHtml;
   }
 
   function formatTime(sec){
@@ -840,6 +892,7 @@
       "&body=" + encodeURIComponent(body);
 
     retryBtn.addEventListener("click", function(){
+      stopPodiumPolling();
       screenResults.hidden = true;
       screenJoin.hidden = false;
       nameInput.value = "";
