@@ -19,6 +19,12 @@
     --good-soft:#E4F1E7;
     --bad:#C1442E;
     --bad-soft:#F8E7E2;
+    --rank-gold:#C08A2E;
+    --rank-silver:#8D9096;
+    --rank-bronze:#AD6A3A;
+    --rank-gold-soft:#F3E7CE;
+    --rank-silver-soft:#E9E9E8;
+    --rank-bronze-soft:#F1E0D2;
     --shadow: 0 1px 2px rgba(29,38,33,.06), 0 10px 30px -12px rgba(29,38,33,.18);
   }
   @media (prefers-color-scheme: dark){
@@ -35,6 +41,12 @@
       --good-soft:#1B3226;
       --bad:#E27A63;
       --bad-soft:#3A211C;
+      --rank-gold:#D9A648;
+      --rank-silver:#A7ABB2;
+      --rank-bronze:#C98A57;
+      --rank-gold-soft:#332A16;
+      --rank-silver-soft:#282B2E;
+      --rank-bronze-soft:#33241A;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.6);
     }
   }
@@ -51,6 +63,12 @@
     --good-soft:#1B3226;
     --bad:#E27A63;
     --bad-soft:#3A211C;
+    --rank-gold:#D9A648;
+    --rank-silver:#A7ABB2;
+    --rank-bronze:#C98A57;
+    --rank-gold-soft:#332A16;
+    --rank-silver-soft:#282B2E;
+    --rank-bronze-soft:#33241A;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.6);
   }
 
@@ -287,6 +305,60 @@
   .cell.good{ background:var(--good); }
   .cell.bad{ background:var(--bad); }
 
+  /* ---- Podium ---- */
+  .podium-block{ margin-bottom:28px; padding-bottom:26px; border-bottom:1px solid var(--line); }
+  .podium-heading{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin-bottom:16px;
+  }
+  .podium-heading h3{ font-size:16px; font-weight:600; }
+  .podium-heading .count{ font-size:12px; color:var(--ink-soft); }
+  .podium-loading, .podium-empty{ font-size:13.5px; color:var(--ink-soft); }
+
+  .podium{
+    display:flex; align-items:flex-end; justify-content:center; gap:8px;
+    margin-bottom:20px;
+  }
+  .step{
+    flex:1; max-width:140px;
+    display:flex; flex-direction:column; align-items:center;
+    gap:8px;
+  }
+  .step .medal{ font-size:22px; }
+  .step .p-name{
+    font-size:12.5px; font-weight:600; text-align:center;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .step .p-score{ font-size:11.5px; color:var(--ink-soft); }
+  .step .riser{
+    width:100%;
+    border-radius:10px 10px 4px 4px;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding-top:8px;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+  }
+  .step.gold .riser{ height:86px; background:var(--rank-gold-soft); border:1.5px solid var(--rank-gold); color:var(--rank-gold); font-size:26px; }
+  .step.silver .riser{ height:64px; background:var(--rank-silver-soft); border:1.5px solid var(--rank-silver); color:var(--rank-silver); font-size:21px; }
+  .step.bronze .riser{ height:48px; background:var(--rank-bronze-soft); border:1.5px solid var(--rank-bronze); color:var(--rank-bronze); font-size:19px; }
+  .step.you .p-name{ color:var(--accent); }
+
+  .ranking{ display:flex; flex-direction:column; gap:0; }
+  .rank-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 0; border-top:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .rank-row:last-child{ border-bottom:1px solid var(--line); }
+  .rank-row .pos{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft);
+    width:22px; flex:none;
+  }
+  .rank-row .rn{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .rs{ font-family:'IBM Plex Mono', monospace; font-weight:600; flex:none; }
+  .rank-row.you{ background:var(--good-soft); border-radius:8px; padding-inline:8px; margin-inline:-8px; }
+  .rank-row.you .rn{ color:var(--good); font-weight:600; }
+
   .review{ display:flex; flex-direction:column; gap:0; margin-bottom:24px; }
   .review-item{ padding:14px 0; border-top:1px solid var(--line); }
   .review-item:last-child{ border-bottom:1px solid var(--line); }
@@ -390,10 +462,17 @@
       <div class="score-name" id="scoreName"></div>
     </div>
 
-    <div class="grid20" id="grid20"></div>
+    <div class="podium-block" id="podiumBlock">
+      <div class="podium-heading">
+        <h3>🏆 Podio del curso</h3>
+        <span class="count" id="podiumCount"></span>
+      </div>
+      <div id="podiumBody"><div class="podium-loading">Cargando resultados de todos…</div></div>
+    </div>
 
     <details>
       <summary></summary>
+      <div class="grid20" id="grid20"></div>
       <div class="review" id="reviewList"></div>
     </details>
 
@@ -458,11 +537,17 @@
 
   var LETTERS = ["A","B","C","D"];
 
+  // Pega aquí la URL de tu Google Apps Script (termina en /exec) para
+  // activar el podio compartido. Mientras esté vacía, el quiz funciona
+  // normal pero sin podio entre compañeros.
+  var SHEET_API_URL = "https://script.google.com/macros/s/AKfycbw3JbJEU6pYpHv0ivqWqL-PsJ58ARuji49vUn8ctGgOUyqjDby429sa1cOOHdKB5oK5KA/exec";
+
   var state = {
     name:"",
     idx:0,
     answers:[], // {picked: index|-1, correct: bool}
-    locked:false
+    locked:false,
+    startedAt:0
   };
 
   var screenJoin = document.getElementById("screen-join");
@@ -484,6 +569,7 @@
     state.name = nameInput.value.trim();
     state.idx = 0;
     state.answers = [];
+    state.startedAt = Date.now();
     screenJoin.hidden = true;
     screenQuiz.hidden = false;
     renderQuestion();
@@ -570,6 +656,7 @@
     screenResults.hidden = false;
 
     var correctCount = state.answers.filter(function(a){ return a.correct; }).length;
+    var timeSeconds = Math.max(1, Math.round((Date.now() - state.startedAt) / 1000));
     scoreCorrect.textContent = correctCount;
     scoreName.textContent = state.name;
 
@@ -610,7 +697,8 @@
       reviewList.appendChild(row);
     });
 
-    setupActions(correctCount, pct);
+    setupActions(correctCount, pct, timeSeconds);
+    submitAndLoadPodium(correctCount, pct, timeSeconds);
   }
 
   function escapeHtml(s){
@@ -619,7 +707,93 @@
     return d.innerHTML;
   }
 
-  function setupActions(correctCount, pct){
+  // ---- Podio compartido (Google Sheets vía Apps Script) ----
+  var podiumBody = document.getElementById("podiumBody");
+  var podiumCount = document.getElementById("podiumCount");
+
+  function submitAndLoadPodium(correctCount, pct, timeSeconds){
+    if(!SHEET_API_URL){
+      podiumBody.innerHTML = '<div class="podium-empty">El podio compartido aún no está activado para este cuestionario.</div>';
+      return;
+    }
+
+    var payload = {
+      name: state.name,
+      score: correctCount,
+      total: QUESTIONS.length,
+      pct: pct,
+      timeSeconds: timeSeconds
+    };
+
+    fetch(SHEET_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    })
+    .catch(function(){ /* seguimos igual: el podio se puede leer aunque el registro falle */ })
+    .then(function(){ return loadPodium(correctCount, timeSeconds); });
+  }
+
+  function loadPodium(myScore, myTimeSeconds){
+    return fetch(SHEET_API_URL)
+      .then(function(r){ return r.json(); })
+      .then(function(list){ renderPodium(list, myScore, myTimeSeconds); })
+      .catch(function(){
+        podiumBody.innerHTML = '<div class="podium-empty">No se pudo cargar el podio en este momento. Tu resultado ya quedó guardado — intenta recargar la página.</div>';
+      });
+  }
+
+  function renderPodium(list, myScore, myTimeSeconds){
+    if(!list || !list.length){
+      podiumCount.textContent = "";
+      podiumBody.innerHTML = '<div class="podium-empty">Eres el primero en responder — ¡vuelve a cargar más tarde para ver el podio completo!</div>';
+      return;
+    }
+
+    podiumCount.textContent = list.length + (list.length === 1 ? " respuesta" : " respuestas");
+
+    var medalOrder = [
+      { key: "silver", pos: 1 },
+      { key: "gold", pos: 0 },
+      { key: "bronze", pos: 2 }
+    ];
+    var medalEmoji = { gold:"🥇", silver:"🥈", bronze:"🥉" };
+
+    var top3Html = '<div class="podium">';
+    medalOrder.forEach(function(m){
+      var p = list[m.pos];
+      if(!p) return;
+      var isYou = p.name === state.name && p.score === myScore && p.timeSeconds === myTimeSeconds;
+      top3Html += '<div class="step ' + m.key + (isYou ? ' you' : '') + '">' +
+        '<div class="medal">' + medalEmoji[m.key] + '</div>' +
+        '<div class="p-name">' + escapeHtml(p.name) + '</div>' +
+        '<div class="riser">' + p.score + '</div>' +
+        '<div class="p-score">' + p.score + '/' + (p.total || QUESTIONS.length) + ' · ' + formatTime(p.timeSeconds) + '</div>' +
+      '</div>';
+    });
+    top3Html += '</div>';
+
+    var restHtml = '<div class="ranking">';
+    list.slice(0, 10).forEach(function(p, i){
+      var isYou = p.name === state.name && p.score === myScore && p.timeSeconds === myTimeSeconds;
+      restHtml += '<div class="rank-row' + (isYou ? ' you' : '') + '">' +
+        '<span class="pos mono">' + (i+1) + '</span>' +
+        '<span class="rn">' + escapeHtml(p.name) + '</span>' +
+        '<span class="rs mono">' + p.score + '/' + (p.total || QUESTIONS.length) + ' · ' + formatTime(p.timeSeconds) + '</span>' +
+      '</div>';
+    });
+    restHtml += '</div>';
+
+    podiumBody.innerHTML = top3Html + restHtml;
+  }
+
+  function formatTime(sec){
+    sec = Number(sec) || 0;
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m > 0 ? (m + "m " + s + "s") : (s + "s");
+  }
+
+  function setupActions(correctCount, pct, timeSeconds){
     var copyBtn = document.getElementById("copyBtn");
     var mailBtn = document.getElementById("mailBtn");
     var retryBtn = document.getElementById("retryBtn");
@@ -629,6 +803,7 @@
       "Resultado — Sección 21 (Provisiones y Contingencias)\n" +
       "Nombre: " + state.name + "\n" +
       "Puntaje: " + correctCount + "/" + QUESTIONS.length + " (" + pct + "%)\n" +
+      "Tiempo: " + formatTime(timeSeconds) + "\n" +
       "Detalle: " + summaryLine + "\n" +
       "Fecha: " + new Date().toLocaleString("es-CO");
 
